@@ -68,22 +68,28 @@ public class Main {
 	public static void main(String[] args) {
 		String category = "baby";
 		
-		String input_dir = "/Users/yinfei.yang/workspace/nlp/MG-LDA/review_data/" + category + "/";
+		String input_dir = "./test_data/" + category + "/";
 		String ifn_bow = input_dir + category + "_sample.bow";
 		String ifn_inds = input_dir + category + "_sample.inds";
 		
-		int n_gl_topics = 40;
-		int n_loc_topics = 10;
-		int iter_nums = 500;
+		String output_dir = "./test_results/" + category + "/";
+		String ofn_topics = output_dir + category + "_sample.topics";
+		String ofn_model = output_dir + category + "_sample.model";
+		
+		int n_gl_topics = 20;
+		int n_loc_topics = 5;
+		int iter_nums = 10;
 		HashMap<Integer, String> id2word = parse_bow_file(ifn_bow);
 		LinkedList<LinkedList<LinkedList<Integer>>> doc_sentence_words = parse_reviews(ifn_inds);
 		
 		MGLDA mglda = new MGLDA(n_gl_topics, n_loc_topics, id2word, doc_sentence_words);
 		mglda.init_model();
 		mglda.run(iter_nums);
+		mglda.save_model(ofn_model);
+		
 		BufferedWriter out = null;
 		try {
-			File file = new File("./tmp.txt");
+			File file = new File(ofn_topics);
 			if (!file.exists()) { file.createNewFile(); }
 			out = new BufferedWriter(new FileWriter(file));
 			

@@ -119,13 +119,19 @@ public class MGLDA {
 		this.ndv_loc = new int[this.n_docs][this.n_of_max_sentences + 2];
 		this.ndvk_loc = new int[this.n_docs][this.n_of_max_sentences + 2][this.n_loc_topics];
 		
-		// TODO: Initial with -1 ?
 		this.doc_w_topics_assign = new int[this.n_docs][this.n_of_max_sentences][this.n_of_max_words];
 		this.doc_w_window_assign = new int[this.n_docs][this.n_of_max_sentences][this.n_of_max_words];
 		this.doc_w_gl_loc_assign = new int[this.n_docs][this.n_of_max_sentences][this.n_of_max_words];
 		
 		this.phi_dist_gl = new double[this.n_gl_topics][this.vocab_size];
 		this.phi_dist_loc = new double[this.n_loc_topics][this.vocab_size];
+		
+		// Accumulated topic - words count and distribution
+		this.acc_nkw_gl = new double[this.n_gl_topics][this.vocab_size];
+		this.acc_nkw_loc = new double[this.n_loc_topics][this.vocab_size];
+		
+		this.acc_phi_dist_gl = new double[this.n_gl_topics][this.vocab_size];
+		this.acc_phi_dist_loc = new double[this.n_loc_topics][this.vocab_size];
 	}
 	
 	public void init_model() {
@@ -404,7 +410,7 @@ public class MGLDA {
 	private void build_acc_counters() {
 		for (int k=0; k<this.n_gl_topics; k++) {
 			for (int word_id=0; word_id<this.vocab_size; word_id++) {
-				this.acc_nkw_gl[k][word_id] += this.nkw_gl[k][word_id] + this.beta_gl;
+				this.acc_nkw_gl[k][word_id] += (this.nkw_gl[k][word_id] + this.beta_gl);
 			}
 		}
 		
@@ -479,7 +485,7 @@ public class MGLDA {
 			}
 		}
 		
-		for (int k=0; k<this.n_gl_topics; k++) {
+		for (int k=0; k<this.n_loc_topics; k++) {
 			double num_words = 0;
 			for (int word_id=0; word_id<this.vocab_size; word_id++) { num_words += nkw_aug[k][word_id]; }
 			for (int word_id=0; word_id<this.vocab_size; word_id++) {
@@ -536,8 +542,8 @@ public class MGLDA {
 			
 			Utils.print_matrix(out, this.phi_dist_gl, "phi_dist_gl");
 			Utils.print_matrix(out, this.phi_dist_loc, "phi_dist_loc");
-			Utils.print_matrix(out, this.acc_phi_dist_gl, "phi_dist_gl");
-			Utils.print_matrix(out, this.acc_phi_dist_loc, "phi_dist_loc");
+			Utils.print_matrix(out, this.acc_phi_dist_gl, "acc_phi_dist_gl");
+			Utils.print_matrix(out, this.acc_phi_dist_loc, "acc_phi_dist_loc");
 			
 			out.close();
 		} catch (IOException e) {
