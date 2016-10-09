@@ -27,6 +27,17 @@ public class Utils  {
 		}
 	}
 	
+	public static void print_matrix(BufferedWriter out, double[] m, String name) throws IOException {
+		int i_l;
+		i_l = m.length; 
+		
+		out.write(name+"\n");
+		out.write("" + i_l + "\n");
+		for (int i=0; i<m.length; i++) {
+			out.write( String.format("%.6f ", m[i]) );
+		}
+		out.write("\n");
+	}
 	
 	public static void print_matrix(BufferedWriter out, int[][] m, String name) throws IOException {
 		int i_l, j_l;
@@ -52,7 +63,7 @@ public class Utils  {
 		out.write("" + i_l + " " + j_l + "\n");
 		for (int i=0; i<m.length; i++) {
 			for (int j=0; j<m[i].length; j++) {
-				out.write( String.format("%.4f ", m[i][j]) );
+				out.write( String.format("%.6f ", m[i][j]) );
 			}
 			out.write("\n");
 		}

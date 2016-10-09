@@ -75,14 +75,26 @@ public class MGLDA {
     //////////////////////////////////
     // Distributions
     //////////////////////////////////
-	private double [][] phi_dist_gl;
-	private double [][] phi_dist_loc;
-	
+
 	private double [][] acc_nkw_gl;
 	private double [][] acc_nkw_loc;
 	
+	private double [] acc_nk_gl;
+	private double [] acc_nk_loc;
+	
+	private double [] dist_gl;
+	private double [] dist_loc;
+	
+	private double [][] phi_dist_gl;
+	private double [][] phi_dist_loc;
+
+	private double [] acc_dist_gl;
+	private double [] acc_dist_loc;
+	
 	private double [][] acc_phi_dist_gl;
 	private double [][] acc_phi_dist_loc;
+	
+	private double [] ll;
 	
 	private void println(String str) {
 		System.out.println(str);
@@ -126,12 +138,26 @@ public class MGLDA {
 		this.phi_dist_gl = new double[this.n_gl_topics][this.vocab_size];
 		this.phi_dist_loc = new double[this.n_loc_topics][this.vocab_size];
 		
+		this.dist_gl = new double[this.n_gl_topics];
+		this.dist_loc = new double[this.n_gl_topics];
+		
+		this.dist_gl = new double[this.n_gl_topics];
+		this.dist_loc = new double[this.n_loc_topics];
+		
+		this.ll = new double[2];
+
 		// Accumulated topic - words count and distribution
 		this.acc_nkw_gl = new double[this.n_gl_topics][this.vocab_size];
 		this.acc_nkw_loc = new double[this.n_loc_topics][this.vocab_size];
 		
 		this.acc_phi_dist_gl = new double[this.n_gl_topics][this.vocab_size];
 		this.acc_phi_dist_loc = new double[this.n_loc_topics][this.vocab_size];
+		
+		this.acc_nk_gl = new double[this.n_gl_topics];
+		this.acc_nk_loc = new double[this.n_loc_topics];
+		
+		this.acc_dist_gl = new double[this.n_gl_topics];
+		this.acc_dist_loc = new double[this.n_loc_topics];
 	}
 	
 	public void init_model() {
@@ -296,7 +322,7 @@ public class MGLDA {
 		return label_v_r_k.get(argmax);
 	}
 
-	private LinkedList<Double> calc_loglikelihood() {
+	private void calc_loglikelihood() {
 		double ll_gl=0;
 		double ll_loc=0;
 		
@@ -351,10 +377,8 @@ public class MGLDA {
 			}
 		}
 		
-		LinkedList<Double> log_likelihood = new LinkedList<Double>();
-		log_likelihood.add(ll_gl);
-		log_likelihood.add(ll_loc);
-		return log_likelihood;
+		this.ll[0] = ll_gl;
+		this.ll[1] = ll_loc;
 	}
 
 	public void run() {
@@ -401,6 +425,7 @@ public class MGLDA {
 			this.iter_count++;
 			
 		}
+		calc_loglikelihood();
 		build_phi_matrix_gl();
 		build_phi_matrix_loc();
 		build_acc_phi_matrix_gl();
@@ -409,12 +434,16 @@ public class MGLDA {
 	
 	private void build_acc_counters() {
 		for (int k=0; k<this.n_gl_topics; k++) {
+			this.acc_nk_gl[k] += (this.nk_gl[k] + this.beta_gl);
+			
 			for (int word_id=0; word_id<this.vocab_size; word_id++) {
 				this.acc_nkw_gl[k][word_id] += (this.nkw_gl[k][word_id] + this.beta_gl);
 			}
 		}
 		
 		for (int k=0; k<this.n_loc_topics; k++) {
+			this.acc_nk_loc[k] += (this.nk_loc[k] + this.beta_loc);
+
 			for (int word_id=0; word_id<this.vocab_size; word_id++) {
 				this.acc_nkw_loc[k][word_id] += this.nkw_loc[k][word_id] + this.beta_loc;
 			}
@@ -423,73 +452,102 @@ public class MGLDA {
 	
 	private void build_phi_matrix_gl() {
 		double[][] nkw_aug = new double[this.n_gl_topics][this.vocab_size];
+		double[] nk_aug = new double[this.n_gl_topics];
 		
+		double num_words = 0;
 		for (int k=0; k<this.n_gl_topics; k++) {
+			nk_aug[k] = this.nk_gl[k] + this.beta_gl;
+			num_words += nk_aug[k];
+			
 			for(int w=0; w<this.vocab_size; w++) {
 				nkw_aug[k][w] = this.nkw_gl[k][w] + this.beta_gl;
 			}
 		}
 		
 		for (int k=0; k<this.n_gl_topics; k++) {
-			double num_words = 0;
-			for (int word_id=0; word_id<this.vocab_size; word_id++) { num_words += nkw_aug[k][word_id]; }
+			this.dist_gl[k] = nk_aug[k] / num_words;
+			
+			double num_words_topic = 0;
+			for (int word_id=0; word_id<this.vocab_size; word_id++) { num_words_topic += nkw_aug[k][word_id]; }
 			for (int word_id=0; word_id<this.vocab_size; word_id++) {
-				this.phi_dist_gl[k][word_id] = nkw_aug[k][word_id] / num_words;
+				this.phi_dist_gl[k][word_id] = nkw_aug[k][word_id] / num_words_topic;
 			}
 		}
-		
+
 	}
 	
 	private void build_phi_matrix_loc() {
 		double [][] nkw_aug = new double[this.n_loc_topics][this.vocab_size];
-		
+		double[] nk_aug = new double[this.n_loc_topics];
+
+		double num_words = 0;
 		for (int k=0; k<this.n_loc_topics; k++) {
+			nk_aug[k] = this.nk_loc[k] + this.beta_loc;
+			num_words += nk_aug[k];
+			
 			for(int w=0; w<this.vocab_size; w++) {
 				nkw_aug[k][w] = this.nkw_loc[k][w] + this.beta_loc;
 			}
 		}
 		
 		for (int k=0; k<this.n_loc_topics; k++) {
-			double num_words = 0;
-			for (int word_id=0; word_id<this.vocab_size; word_id++) { num_words += nkw_aug[k][word_id]; }
+			this.dist_loc[k] = nk_aug[k] / num_words;
+			
+			double num_words_topic = 0;
+			for (int word_id=0; word_id<this.vocab_size; word_id++) { num_words_topic += nkw_aug[k][word_id]; }
 			for (int word_id=0; word_id<this.vocab_size; word_id++) {
-				this.phi_dist_loc[k][word_id] = nkw_aug[k][word_id] / num_words;
+				this.phi_dist_loc[k][word_id] = nkw_aug[k][word_id] / num_words_topic;
 			}
 		}
+
 	}
 
 	private void build_acc_phi_matrix_gl() {
 		double[][] nkw_aug = new double[this.n_gl_topics][this.vocab_size];
+		double[] nk_aug = new double[this.n_gl_topics];
 		
+		double num_words = 0;
 		for (int k=0; k<this.n_gl_topics; k++) {
+			nk_aug[k] = (double)(this.acc_nk_gl[k]) / (this.iter_count-1) ;
+			num_words += nk_aug[k];
+			
 			for(int w=0; w<this.vocab_size; w++) {
 				nkw_aug[k][w] = (double)(this.acc_nkw_gl[k][w]) / (this.iter_count-1) ;
 			}
 		}
 		
 		for (int k=0; k<this.n_gl_topics; k++) {
-			double num_words = 0;
-			for (int word_id=0; word_id<this.vocab_size; word_id++) { num_words += nkw_aug[k][word_id]; }
+			this.acc_dist_gl[k] = nk_aug[k] / num_words;
+			
+			double num_words_topic = 0;
+			for (int word_id=0; word_id<this.vocab_size; word_id++) { num_words_topic += nkw_aug[k][word_id]; }
 			for (int word_id=0; word_id<this.vocab_size; word_id++) {
-				this.acc_phi_dist_gl[k][word_id] = nkw_aug[k][word_id] / num_words;
+				this.acc_phi_dist_gl[k][word_id] = nkw_aug[k][word_id] / num_words_topic;
 			}
 		}
 	}
 	
 	private void build_acc_phi_matrix_loc() {
 		double[][] nkw_aug = new double[this.n_loc_topics][this.vocab_size];
+		double[] nk_aug = new double[this.n_gl_topics];
 		
+		double num_words = 0;
 		for (int k=0; k<this.n_loc_topics; k++) {
+			nk_aug[k] = (double)(this.acc_nk_gl[k]) / (this.iter_count-1) ;
+			num_words += nk_aug[k];
+			
 			for(int w=0; w<this.vocab_size; w++) {
 				nkw_aug[k][w] = (double)(this.acc_nkw_loc[k][w]) / (this.iter_count-1) ;
 			}
 		}
 		
 		for (int k=0; k<this.n_loc_topics; k++) {
-			double num_words = 0;
-			for (int word_id=0; word_id<this.vocab_size; word_id++) { num_words += nkw_aug[k][word_id]; }
+			this.acc_dist_loc[k] = nk_aug[k] / num_words;
+
+			double num_words_topic = 0;
+			for (int word_id=0; word_id<this.vocab_size; word_id++) { num_words_topic += nkw_aug[k][word_id]; }
 			for (int word_id=0; word_id<this.vocab_size; word_id++) {
-				this.acc_phi_dist_loc[k][word_id] = nkw_aug[k][word_id] / num_words;
+				this.acc_phi_dist_loc[k][word_id] = nkw_aug[k][word_id] / num_words_topic;
 			}
 		}
 	}
@@ -540,8 +598,13 @@ public class MGLDA {
 			if (!file.exists()) { file.createNewFile(); }
 			BufferedWriter out = new BufferedWriter(new FileWriter(file));
 			
+			Utils.print_matrix(out, this.ll, "loglikelihood");
+			Utils.print_matrix(out, this.dist_gl, "dist_gl");
+			Utils.print_matrix(out, this.dist_loc, "dist_loc");
 			Utils.print_matrix(out, this.phi_dist_gl, "phi_dist_gl");
 			Utils.print_matrix(out, this.phi_dist_loc, "phi_dist_loc");
+			Utils.print_matrix(out, this.acc_dist_gl, "acc_dist_gl");
+			Utils.print_matrix(out, this.acc_dist_loc, "acc_dist_loc");
 			Utils.print_matrix(out, this.acc_phi_dist_gl, "acc_phi_dist_gl");
 			Utils.print_matrix(out, this.acc_phi_dist_loc, "acc_phi_dist_loc");
 			

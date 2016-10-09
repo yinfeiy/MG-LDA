@@ -68,17 +68,17 @@ public class Main {
 	public static void main(String[] args) {
 		String category = "baby";
 		
-		String input_dir = "./test_data/" + category + "/";
+		String input_dir = "./data/" + category + "/";
 		String ifn_bow = input_dir + category + "_sample.bow";
 		String ifn_inds = input_dir + category + "_sample.inds";
 		
-		String output_dir = "./test_results/" + category + "/";
+		String output_dir = "./results/" + category + "/";
 		String ofn_topics = output_dir + category + "_sample.topics";
 		String ofn_model = output_dir + category + "_sample.model";
 		
-		int n_gl_topics = 20;
-		int n_loc_topics = 5;
-		int iter_nums = 10;
+		int n_gl_topics = 10;
+		int n_loc_topics = 3;
+		int iter_nums = 20;
 		HashMap<Integer, String> id2word = parse_bow_file(ifn_bow);
 		LinkedList<LinkedList<LinkedList<Integer>>> doc_sentence_words = parse_reviews(ifn_inds);
 		
