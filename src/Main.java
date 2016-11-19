@@ -76,9 +76,9 @@ public class Main {
 		String ofn_topics = output_dir + category + "_sample.topics";
 		String ofn_model = output_dir + category + "_sample.model";
 		
-		int n_gl_topics = 10;
-		int n_loc_topics = 3;
-		int iter_nums = 20;
+		int n_gl_topics = 3;
+		int n_loc_topics = 1;
+		int iter_nums = 2;
 		HashMap<Integer, String> id2word = parse_bow_file(ifn_bow);
 		LinkedList<LinkedList<LinkedList<Integer>>> doc_sentence_words = parse_reviews(ifn_inds);
 		

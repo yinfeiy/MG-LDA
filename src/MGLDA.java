@@ -612,6 +612,21 @@ public class MGLDA {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		try {
+			File file = new File(model_fname + ".dict");
+			if (!file.exists()) { file.createNewFile(); }
+			BufferedWriter out = new BufferedWriter(new FileWriter(file));
+			
+			System.out.println(this.id2word.size());
+			for (int i=0; i<this.id2word.size(); i++) {
+				out.write("" + i + " " + this.id2word.get(i) + "\n");
+			}
+			
+			out.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public void save_checkpoint(String checkpoint_fname) {
