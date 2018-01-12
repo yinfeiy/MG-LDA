@@ -268,7 +268,7 @@ public class MGLDA {
 				p_v_r_k.add(score);
 			}
 			
-			part3 = (this.ndv_loc[doc_id][sent_id+v] + this.beta_loc) / (this.ndv[doc_id][sent_id+v] + this.alpha_mix_gl + this.alpha_mix_loc);
+			part3 = (this.ndv_loc[doc_id][sent_id+v] + this.alpha_mix_loc) / (this.ndv[doc_id][sent_id+v] + this.alpha_mix_gl + this.alpha_mix_loc);
 			for (int k=0; k < this.n_loc_topics; k++) {
 				LinkedList<Integer> label = new LinkedList<Integer>();
 				label.add(v);
